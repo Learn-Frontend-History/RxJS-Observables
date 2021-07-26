@@ -1,4 +1,6 @@
-import {Options, prepareDOM} from "../tools";
+import {Options, prepareDOM, Source} from "../tools";
+
+import { print } from '../tools'
 
 interface Actors<P, C> { producer: P, consumer: C }
 
@@ -14,18 +16,18 @@ const OPTIONS: Options = {
 prepareDOM(OPTIONS)
 
 { //pull single
-    const actors: Actors<() => string, (...any) => void> = {
+    const actors: Actors<() => string, (source: Source, value: any) => void> = {
         producer: function () {
             return 'pull single'
         },
-        consumer: console.log.bind(console)
+        consumer: print
     }
 
     document.getElementById(
         OPTIONS.buttons[0].id
     ).addEventListener(
         'click',
-        _ => actors.consumer(actors.producer())
+        _ => actors.consumer('Native', actors.producer())
     )
 }
 
@@ -39,16 +41,16 @@ prepareDOM(OPTIONS)
         return 'complete'
     }
 
-    const actors: Actors<Iterator<string>, (...any) => void> = {
+    const actors: Actors<Iterator<string>, (source: Source, value: any) => void> = {
         producer: fooGen(),
-        consumer: console.log.bind(console)
+        consumer: print
     }
 
     document.getElementById(
         OPTIONS.buttons[1].id
     ).addEventListener(
         'click',
-        _ => actors.consumer(actors.producer.next().value)
+        _ => actors.consumer('Native', actors.producer.next().value)
     )
 }
 
@@ -62,14 +64,14 @@ prepareDOM(OPTIONS)
     ).addEventListener(
         'click',
         _ => {
-            const actors: Actors<Promise<string>, any> = {
+            const actors: Actors<Promise<string>, (source: Source, value: any) => void> = {
                 producer: fooProm(),
-                consumer: console.log.bind(console)
+                consumer: print
             }
 
-            actors.consumer('waiting value...')
+            actors.consumer('Native', 'waiting value...')
 
-            actors.producer.then(actors.consumer)
+            actors.producer.then(value => actors.consumer('Native', value))
         }
     )
 }
@@ -89,14 +91,14 @@ prepareDOM(OPTIONS)
     ).addEventListener(
         'click',
         _ => {
-            const actors: Actors<AsyncIterator<unknown, string, unknown>, (...any) => void> = {
+            const actors: Actors<AsyncIterator<unknown, string, unknown>, (source: Source, value: any) => void> = {
                 producer: fooGenProm(),
-                consumer: console.log.bind(console)
+                consumer: print
             }
 
             const start = function getNext(producer) {
                 producer.next().then(next => {
-                    console.log(next.value)
+                    actors.consumer('Native', next.value)
 
                     if (!next.done) {
                         getNext(producer)
@@ -104,7 +106,7 @@ prepareDOM(OPTIONS)
                 })
             }
 
-            actors.consumer('waiting values...')
+            actors.consumer('Native', 'waiting values...')
 
             start(actors.producer)
         }
