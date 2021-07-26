@@ -1,4 +1,5 @@
 import {Options, prepareDOM, Source} from "../tools";
+import {Observable} from "rxjs";
 
 import { print } from '../tools'
 
@@ -11,6 +12,7 @@ const OPTIONS: Options = {
         { id: 'pull-multiply', caption: 'pull multiply' },
         { id: 'push-single', caption: 'push single' },
         { id: 'push-multiply', caption: 'push multiply' },
+        { id: 'rxjs-observable', caption: 'rxjs observable' }
     ]
 }
 prepareDOM(OPTIONS)
@@ -109,6 +111,36 @@ prepareDOM(OPTIONS)
             actors.consumer('Native', 'waiting values...')
 
             start(actors.producer)
+        }
+    )
+}
+
+{ // rxjs observable
+    document.getElementById(
+        OPTIONS.buttons[4].id
+    ).addEventListener(
+        'click',
+        _ => {
+            const actors: Actors<Observable<string>, (source: Source, value: any) => void> = {
+                producer: new Observable(observer => {
+                    observer.next('value 1')
+                    observer.next('value 2')
+                    observer.next('value 3')
+                    setTimeout(_ => {
+                        observer.next('value 4 (async)')
+                        observer.complete()
+                    }, 2000)
+
+                }),
+                consumer: print
+            }
+
+            print('RxJS', 'waiting values...')
+            actors.producer.subscribe({
+                next: value => actors.consumer('RxJS', value),
+                error: error => print('RxJS', `ERROR ${error}`),
+                complete: () => print('RxJS', 'complete')
+            })
         }
     )
 }
