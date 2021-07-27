@@ -29,7 +29,10 @@ prepareDOM(OPTIONS)
         OPTIONS.buttons[0].id
     ).addEventListener(
         'click',
-        _ => actors.consumer('Native', actors.producer())
+        _ => {
+            console.group()
+            actors.consumer('Native', actors.producer())
+        }
     )
 }
 
@@ -48,11 +51,17 @@ prepareDOM(OPTIONS)
         consumer: print
     }
 
+    let firstValue = true
     document.getElementById(
         OPTIONS.buttons[1].id
     ).addEventListener(
         'click',
-        _ => actors.consumer('Native', actors.producer.next().value)
+        _ => {
+            firstValue && console.group()
+            actors.consumer('Native', actors.producer.next().value)
+
+            firstValue = false
+        }
     )
 }
 
@@ -71,6 +80,7 @@ prepareDOM(OPTIONS)
                 consumer: print
             }
 
+            console.group()
             actors.consumer('Native', 'waiting value...')
 
             actors.producer.then(value => actors.consumer('Native', value))
@@ -108,6 +118,7 @@ prepareDOM(OPTIONS)
                 })
             }
 
+            console.group()
             actors.consumer('Native', 'waiting values...')
 
             start(actors.producer)
@@ -135,7 +146,8 @@ prepareDOM(OPTIONS)
                 consumer: print
             }
 
-            print('RxJS', 'waiting values...')
+            console.group()
+            actors.consumer('RxJS', 'waiting values...')
             actors.producer.subscribe({
                 next: value => actors.consumer('RxJS', value),
                 error: error => print('RxJS', `ERROR ${error}`),
